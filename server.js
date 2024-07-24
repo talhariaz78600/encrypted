@@ -1,8 +1,9 @@
 const express = require('express');
 const crypto = require('crypto');
+const { message } = require('statuses');
 
 const app = express();
-const port = 3000;
+const port = 5000;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -45,7 +46,11 @@ app.post('/encrypt', (req, res) => {
 
 });
 
+
+app.get("/", (req, res)=>{
+    res.status(200).json({message:`server is running ${port}`})
+})
 // Start the server
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running on ${port}`);
 });
