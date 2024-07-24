@@ -1,56 +1,52 @@
 const express = require('express');
-const crypto = require('crypto');
-const { message } = require('statuses');
+const jwt = require('jsonwebtoken');
 
 const app = express();
-const port = 5000;
+const port = 3000;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Route to handle separate encryption
-app.post('/encrypt', (req, res) => {
-    const { password, code, certificate } = req.body;
+// Shared secret key (for demonstration purposes only)
+const secretKey = '3463764756476538476512';
 
-    try {
+// Function to sign data
+const signData = (data) => {
+  // Sign the data with the shared secret key
+  return jwt.sign({ data }, secretKey, { algorithm: 'HS256' });
+};
 
-        if (!password || !code || !certificate) {
-            return res.status(400).send('Missing required fields: password, code, or certificate');
-        }
-        const encryptData = (data) => {
-            const encryptionKey = crypto.randomBytes(32);
-            const iv = crypto.randomBytes(16);
-            const cipher = crypto.createCipheriv('aes-256-cbc', encryptionKey, iv);
-            let encrypted = cipher.update(data, 'utf8', 'hex');
-            encrypted += cipher.final('hex');
-            return encrypted;
-        };
+// Route to handle data signing
+app.post('/sign', (req, res) => {
+  const { password, certificate, xmlData } = req.body;
 
-        // Encrypt each piece of data separately
-        const encryptedPassword = encryptData(password);
-        const encryptedCode = encryptData(code);
-        const encryptedCertificate = encryptData(certificate);
+  if (!password || !certificate || !xmlData) {
+    return res.status(400).send('Missing required fields: password, certificate, or xmlData');
+  }
 
-        // Return the encrypted data, keys, and IVs (for demonstration purposes)
-        res.status(200).json({
-            encryptedPassword: encryptedPassword,
-            encryptedCode: encryptedCode,
-            encryptedCertificate: encryptedCertificate,
-        });
-    } catch (error) {
-        res.json({ error: error.message });
-    }
+  try {
+    // Sign each piece of data separately
+    const signedPassword = signData(password);
+    const signedCertificate = signData(certificate);
+    const signedXmlData = signData(xmlData);
 
-
-    // Function to encrypt data
-
+    // Return the signed data
+    res.json({
+      signedPassword,
+      signedCertificate,
+      signedXmlData,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to sign data', details: error.message });
+  }
 });
 
+// Health check route
+app.get("/", (req, res) => {
+  res.status(200).json({ message: `server is running on port ${port}` });
+});
 
-app.get("/", (req, res)=>{
-    res.status(200).json({message:`server is running ${port}`})
-})
 // Start the server
 app.listen(port, () => {
-    console.log(`Server is running on ${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 });

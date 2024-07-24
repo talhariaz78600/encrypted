@@ -25,6 +25,7 @@
     "define-data-property": "^1.1.4",
     "depd": "^2.0.0",
     "destroy": "^1.2.0",
+    "dotenv": "^16.4.5",
     "ee-first": "^1.1.1",
     "encodeurl": "^1.0.2",
     "es-define-property": "^1.0.0",
@@ -54,6 +55,7 @@
     "is-extglob": "^2.1.1",
     "is-glob": "^4.0.3",
     "is-number": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
     "media-typer": "^0.3.0",
     "merge-descriptors": "^1.0.1",
     "methods": "^1.1.2",
@@ -63,6 +65,7 @@
     "minimatch": "^3.1.2",
     "ms": "^2.0.0",
     "negotiator": "^0.6.3",
+    "node-jose": "^2.2.0",
     "nodemon": "^3.1.4",
     "normalize-path": "^3.0.0",
     "object-inspect": "^1.13.2",
@@ -102,8 +105,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "build":"node server.js",
-    "dev":"nodemon server.js"
+    "build": "node server.js",
+    "dev": "nodemon server.js"
   },
   "author": "",
   "license": "ISC"
