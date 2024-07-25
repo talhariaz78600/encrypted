@@ -1,14 +1,12 @@
-
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { create } = require('xmlbuilder2');
+const { DOMParser, XMLSerializer } = require('@xmldom/xmldom');
 
 const app = express();
 const port = 4000;
 
-const cors = require("cors")
-app.use(cors())
 // Middleware to parse JSON bodies
 app.use(express.json());
 
@@ -41,26 +39,39 @@ app.post('/sign', (req, res) => {
   }
 
   try {
-    // Sign the XML data using HMAC and JWT
-    const signedToken = signData(xmlData);
+    // Parse the incoming XML
+    const doc = new DOMParser().parseFromString(xmlData, 'text/xml');
+    const serializer = new XMLSerializer();
+
+    // Process each child element of the root to sign its content
+    Array.from(doc.documentElement.childNodes).forEach(node => {
+      if (node.nodeType === 1) {  // Only element nodes
+        const originalContent = node.textContent.trim();
+        const signedContent = signData(originalContent);
+        // Clear existing content and append the signed content only
+        node.textContent = '';
+        const signedNode = doc.createElement('SignedContent');
+        signedNode.textContent = signedContent;
+        node.appendChild(signedNode);
+      }
+    });
+
+    // Serialize the modified XML document to a string
+    const signedXmlData = serializer.serializeToString(doc);
 
     // Encrypt the password and certificate
     const encryptedPassword = encryptData(password);
     const encryptedCertificate = encryptData(certificate);
 
-    // Wrap the signed token, encrypted password, and encrypted certificate in a SOAP-like XML structure
+    // Construct the SOAP-like XML response with signed data and encrypted fields
     const soapEnvelope = create({ version: '1.0', encoding: 'UTF-8' })
-      .ele('soapenv:Envelope', {
-        'xmlns:soapenv': 'http://schemas.xmlsoap.org/soap/envelope/',
-        'xmlns:fu': 'http://www.fu.gov.si/',
-        'xmlns:xd': 'http://www.w3.org/2000/09/xmldsig#'
-      })
-      .ele('soapenv:Header').up()
-      .ele('soapenv:Body')
-      .ele('fu:SignedData')
-      .ele('fu:Token').txt(signedToken).up()
-      .ele('fu:EncryptedPassword').txt(encryptedPassword).up()
-      .ele('fu:EncryptedCertificate').txt(encryptedCertificate).up()
+      .ele('Envelope')
+      .ele('Header').up()
+      .ele('Body')
+      .ele('SignedData')
+      .ele('XmlData').dat(signedXmlData).up()
+      .ele('EncryptedPassword').txt(encryptedPassword).up()
+      .ele('EncryptedCertificate').txt(encryptedCertificate).up()
       .up()
       .up()
       .up()
